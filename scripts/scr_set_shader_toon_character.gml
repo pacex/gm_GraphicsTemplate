@@ -5,9 +5,9 @@ shader_set(sh_toon_character);
 var daytime = true;
 
 //Light direction rotates to better visualize the effect
-light_direction[0] = lengthdir_x(1, current_time * 0.04);
+/*light_direction[0] = lengthdir_x(1, current_time * 0.04);
 light_direction[1] = lengthdir_y(1, current_time * 0.04);
-light_direction[2] = -1;
+light_direction[2] = -1;*/
 
 var light_intensity = 1;
 

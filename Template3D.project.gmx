@@ -87,18 +87,24 @@
     <background>background\tex_color</background>
     <background>background\tex_toon_simple</background>
     <background>background\tex_toon_staged</background>
+    <background>background\tex_ground</background>
   </backgrounds>
   <paths name="paths"/>
   <scripts name="scripts">
     <script>scripts\scr_set_shader_toon_character.gml</script>
+    <script>scripts\scr_set_shader_shaded.gml</script>
+    <script>scripts\scr_set_shader_shadow_map.gml</script>
   </scripts>
   <shaders name="shaders">
     <shader type="GLSLES">shaders\sh_toon_character.shader</shader>
+    <shader type="GLSLES">shaders\sh_shaded.shader</shader>
+    <shader type="GLSLES">shaders\sh_shadow_map.shader</shader>
   </shaders>
   <objects name="objects">
     <object>objects\obj_camera</object>
     <object>objects\obj_cube</object>
     <object>objects\obj_moblin</object>
+    <object>objects\obj_ground</object>
   </objects>
   <rooms name="rooms">
     <room>rooms\rm_main</room>
