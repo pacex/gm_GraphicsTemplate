@@ -1,4 +1,6 @@
-
+/* TOON LIGHTING SHADER
+    inspired by: https://www.youtube.com/watch?v=mnxs6CR6Zrk
+*/
 attribute vec3 in_Position;                     // (x,y,z)
 attribute vec3 in_Normal;                       // (x,y,z)     
 attribute vec4 in_Colour;                       // (r,g,b,a)
@@ -18,8 +20,6 @@ void main()
     gl_Position = gm_Matrices[MATRIX_WORLD_VIEW_PROJECTION] * object_space_pos;
     
     //Transform object space normal to world space
-    //In general normal have to be transformed with the inverted and transposed world matrix. But as long as scaling factors
-    //are equal in each dimension, this should work fine.
     vec3 world_space_normal = normalize((gm_Matrices[MATRIX_WORLD] * vec4(in_Normal, 0.0)).xyz);
     
     //Normalize light direction
@@ -45,7 +45,7 @@ uniform vec3 shadowColour;
 
 void main()
 {
-    //Toon texture is sampled in fragment shader, because GameMaker seems to be unable to sample textures in the vertex stage.
+    //Sample toon texture using lighting coefficient
     float toonLighting = texture2D(toonTexture, vec2(v_vLighting, 0.5)).r;
     
     //Interpolating between highlight and shadow colours to determine final fragment colour.

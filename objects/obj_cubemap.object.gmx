@@ -8,7 +8,7 @@
   <parentName>&lt;undefined&gt;</parentName>
   <maskName>&lt;undefined&gt;</maskName>
   <events>
-    <event eventtype="7" enumb="11">
+    <event eventtype="0" enumb="0">
       <action>
         <libid>1</libid>
         <id>603</id>
@@ -25,40 +25,7 @@
         <arguments>
           <argument>
             <kind>1</kind>
-            <string>///Cube map render pass
-scr_set_shader_shaded();
-
-d3d_draw_floor(-100,100,-16, 100,-100,-16, background_get_texture(tex_ground), 5, 5);
-
-shader_reset();
-</string>
-          </argument>
-        </arguments>
-      </action>
-    </event>
-    <event eventtype="8" enumb="0">
-      <action>
-        <libid>1</libid>
-        <id>603</id>
-        <kind>7</kind>
-        <userelative>0</userelative>
-        <isquestion>0</isquestion>
-        <useapplyto>-1</useapplyto>
-        <exetype>2</exetype>
-        <functionname></functionname>
-        <codestring></codestring>
-        <whoName>self</whoName>
-        <relative>0</relative>
-        <isnot>0</isnot>
-        <arguments>
-          <argument>
-            <kind>1</kind>
-            <string>///Main render pass
-scr_set_shader_shaded();
-
-d3d_draw_floor(-100,100,-16, 100,-100,-16, background_get_texture(tex_ground), 5, 5);
-
-shader_reset();
+            <string>z = 16;
 </string>
           </argument>
         </arguments>

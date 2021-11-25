@@ -1,3 +1,7 @@
+/* SHADOW MAP SHADER
+    writes depth values as seen from the light source onto the surface
+*/
+
 attribute vec3 in_Position;
 attribute vec2 in_Texcoords;
 
@@ -17,6 +21,7 @@ void main() {
 //######################_==_YOYO_SHADER_MARKER_==_######################@~varying float linearizedDepth;
 varying vec2 v_vTexcoords;
 
+//Write floating point depth as color onto shadow map surface
 vec3 packDepth(float f) {
     return vec3( floor( f * 255.0 ) / 255.0, fract( f * 255.0 ), fract( f * 255.0 * 255.0 ) );
 }

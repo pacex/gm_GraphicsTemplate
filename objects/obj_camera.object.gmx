@@ -26,6 +26,8 @@
           <argument>
             <kind>1</kind>
             <string>///Variables
+
+//Camera control
 hor_rotation = 0;
 ver_rotation = 0;
 distance = 50;
@@ -57,16 +59,44 @@ d3d_set_culling(false);
 texture_set_repeat(true);
 texture_set_interpolation(true);
 
+/* MATRIX_INV_VIEW:
+    inverse view matrix. Transforms view space vectors to world space vectors.
+*/
+globalvar MATRIX_INV_VIEW;
+MATRIX_INV_VIEW = InverseMatrix4(matrix_get(matrix_view));
+
+/* Shadow map global variables
+    shadow_map:             reference to the shadow map surface
+    sm_width, sm_height:    width and height of the shadow map surface
+    lightViewProjMat:       product of the view and projection matrices
+                            of the light source. Used in the sh_shaded shader.
+*/
 globalvar shadow_map, sm_width, sm_height, lightViewProjMat;
 sm_width = window_get_width()*10;
 sm_height = window_get_height()*10;
 
 shadow_map = surface_create(sm_width, sm_height);
 
+/*Cube map global variables
+    cube_map:               array of 6 square surfaces forming the cube map
+    sm_size:                size of these surfaces
+    render_cubemap:         flag to determine if the cube map is (re)rendered for the current frame.
+                            Set to true initially, set to false after rendering =&gt; cube map is only rendered once.
+*/
+globalvar cube_map, cm_size, render_cubemap;
+cm_size = 512;
+render_cubemap = true;
+for(var i = 5; i &gt;= 0; i--){
+    cube_map[i] = surface_create(cm_size, cm_size);
+}
+
+/*Lighting global varliables
+    light_direction:        3-element array defining the orientation of the directional light source.
+*/
 globalvar light_direction;
-light_direction[0] = lengthdir_x(1, current_time * 0.04);
-light_direction[1] = lengthdir_y(1, current_time * 0.04);
-light_direction[2] = -1;
+light_direction[0] = lengthdir_x(1, current_time * 0.04);       //X
+light_direction[1] = lengthdir_y(1, current_time * 0.04);       //Y
+light_direction[2] = -1;                                        //Z 
 </string>
           </argument>
         </arguments>
@@ -96,9 +126,9 @@ distance += (mouse_wheel_down() - mouse_wheel_up()) * 4;
 distance = max(1, distance);
 
 //Rotate
-
 if (mouse_check_button(mb_right)){
     
+    //Disable cursor while rotating camera
     window_set_cursor(cr_none);
 
     if (!mouse_check_button_pressed(mb_right)){
@@ -133,9 +163,79 @@ if (mouse_check_button(mb_right)){
           <argument>
             <kind>1</kind>
             <string>///Light direction update
+
+/* For demonstration purposes we rotate the directional lightsource
+    around the scene at a downwards angle.
+*/
+
 light_direction[0] = lengthdir_x(1, current_time * 0.04);
 light_direction[1] = lengthdir_y(1, current_time * 0.04);
 light_direction[2] = -1;
+</string>
+          </argument>
+        </arguments>
+      </action>
+    </event>
+    <event eventtype="7" enumb="10">
+      <action>
+        <libid>1</libid>
+        <id>603</id>
+        <kind>7</kind>
+        <userelative>0</userelative>
+        <isquestion>0</isquestion>
+        <useapplyto>-1</useapplyto>
+        <exetype>2</exetype>
+        <functionname></functionname>
+        <codestring></codestring>
+        <whoName>self</whoName>
+        <relative>0</relative>
+        <isnot>0</isnot>
+        <arguments>
+          <argument>
+            <kind>1</kind>
+            <string>///Prepare shadow map render pass
+
+if (surface_exists(shadow_map)){
+    surface_set_target(shadow_map);
+    
+    /* Disable back face culling
+        enable to prevent back faces from casting shadows.
+    */
+    d3d_set_culling(false);
+    
+    /* Clear shadow map
+        alpha channel must be set to zero to clear depth buffer!
+    */
+    draw_clear_alpha(c_black, 0);
+    
+    /* Set the projection matrix
+        orthogonal projection for directional light source.
+        Use perspective projection for point lights.
+        Only areas inside the view frustum will be shaded!
+    */
+    d3d_set_projection_ortho(0,0,1000, 1000, 0);
+    
+    /* Set the view matrix
+        dist: distance from the origin of the scene where we palce the "camera"
+        to sample depth from the light source. Objects further away will not be rendered
+        onto the shadow map and thus not cast shadows!
+    */
+    var dist = 100;
+    d3d_set_projection(-light_direction[0] * dist, -light_direction[1] * dist, -light_direction[2] * dist, 0,0,0, 0,0,1);
+    
+    /* Product of view and projection matrices from the shadow map render pass.
+        (imagine the light being the camera; directional light, light rays parallel -&gt; orthographic projection)
+        used in sh_shaded to determine fragment's position on the shadow map.
+    */
+    lightViewProjMat = matrix_multiply(matrix_get(matrix_view), matrix_get(matrix_projection));
+    
+}else{
+    //Create shadow map, if lost from memory.
+    shadow_map = surface_create(sm_width, sm_height);
+    show_debug_message("Created shadow map!");
+}
+
+
 </string>
           </argument>
         </arguments>
@@ -205,22 +305,14 @@ d3d_end();
         <arguments>
           <argument>
             <kind>1</kind>
-            <string>///Shadow map render pass
-if (surface_exists(shadow_map)){
-    surface_set_target(shadow_map);
-    d3d_set_culling(false);
-    draw_clear_alpha(c_black, 0);
-    
-    d3d_set_projection_ortho(0,0,1000, 1000, 0);
-    
-    var dist = 100;
-    d3d_set_projection(-light_direction[0] * dist, -light_direction[1] * dist, -light_direction[2] * dist, 0,0,0, 0,0,1);
-    
-    lightViewProjMat = matrix_multiply(matrix_get(matrix_view), matrix_get(matrix_projection));
-    
-}else{
-    shadow_map = surface_create(sm_width, sm_height);
-    show_debug_message("Created shadow map!");
+            <string>///Prepare additional Renderpasses
+
+with(all){
+    /* Shadow map render pass
+        objects that to not draw anything during UserEvent0
+        will not cast shadows.
+    */
+    event_perform(ev_other,ev_user0);
 }
 
 
@@ -228,8 +320,6 @@ if (surface_exists(shadow_map)){
           </argument>
         </arguments>
       </action>
-    </event>
-    <event eventtype="8" enumb="64">
       <action>
         <libid>1</libid>
         <id>603</id>
@@ -246,7 +336,98 @@ if (surface_exists(shadow_map)){
         <arguments>
           <argument>
             <kind>1</kind>
-            <string>draw_surface(shadow_map, 0,0);
+            <string>///Prepare cube map render pass
+if (render_cubemap){
+    for(var i = 0; i &lt; 6; i++){ //Iterate over the 6 faces of the cube
+        if (surface_exists(cube_map[i])){
+            surface_reset_target();
+            surface_set_target(cube_map[i]);
+        
+            d3d_set_culling(true);
+            
+            texture_set_interpolation(false);
+            
+            /* Clear surface.
+                set alpha to 0 to clear depth buffer!
+            */
+            draw_clear_alpha(c_black, 0);
+            
+            // xfrom, xto, xup
+            var xf, yf, zf,     xt, yt, zt,     xu, yu, zu;
+            
+            //xfrom is the same for all faces of the cube (center point)
+            xf = obj_cubemap.x;
+            yf = obj_cubemap.y;
+            zf = obj_cubemap.z;
+            
+            switch(i){ //Define xto and xup dependant of the current cube face
+                case 0:
+                    xt = xf + 1;
+                    yt = yf;
+                    zt = zf;
+                    xu = 0;
+                    yu = 0;
+                    zu = 1;
+                    break;
+                case 1:
+                    xt = xf - 1;
+                    yt = yf;
+                    zt = zf;
+                    xu = 0;
+                    yu = 0;
+                    zu = 1;
+                    break;
+                case 2:
+                    xt = xf;
+                    yt = yf + 1;
+                    zt = zf;
+                    xu = 0;
+                    yu = 0;
+                    zu = 1;
+                    break;
+                case 3:
+                    xt = xf;
+                    yt = yf - 1;
+                    zt = zf;
+                    xu = 0;
+                    yu = 0;
+                    zu = 1;
+                    break;
+                case 4:
+                    xt = xf;
+                    yt = yf;
+                    zt = zf + 1;
+                    xu = 0;
+                    yu = 1;
+                    zu = 0;
+                    break;
+                case 5:
+                    xt = xf;
+                    yt = yf;
+                    zt = zf - 1;
+                    xu = 0;
+                    yu = -1;
+                    zu = 0;
+                    break;
+            }
+            
+            //Build and set view and projection matrices
+            d3d_set_projection_ext(xf, yf, zf, xt, yt, zt, xu, yu, zu, 90, 1, 0.1, 1000);
+            
+            //Draw instances to the cube map.
+            with(all){
+                event_perform(ev_other, ev_user1);
+            }
+        }else{
+            //Create cube map surface, if lost from  memory.
+            cube_map[i] = surface_create(cm_size, cm_size);
+            show_debug_message("Created cube map!");
+        }
+    }
+    render_cubemap = false; //Prevent cube map from rendering in subsequent frames (static cube map)
+}
+
+
 </string>
           </argument>
         </arguments>
@@ -269,19 +450,30 @@ if (surface_exists(shadow_map)){
         <arguments>
           <argument>
             <kind>1</kind>
-            <string>///Main render pass
+            <string>///Prepare main render pass
 
+/* Draw directly onto the application surface.
+    reset target from previous render passes
+*/
 surface_reset_target();
+
 d3d_set_culling(true);
 
+//Set view and projection matrices
 d3d_set_projection_ext(distance,0,0, 0,0,0, 0,0,1, 60, window_get_width() / window_get_height(), 1, 512);
 
+//Transfrom view matrix to fit current camera rotation
 mat_hor_rotation = matrix_build(0,0,0, 0,0,hor_rotation, 1,1,1);
 mat_ver_rotation = matrix_build(0,0,0, 0,ver_rotation,0, 1,1,1);
 
 mat_transform = matrix_multiply(mat_hor_rotation, mat_ver_rotation);
 
 matrix_set(matrix_view, matrix_multiply(mat_transform, matrix_get(matrix_view)));
+
+//Calculate inverse view matrix for use in shaders
+MATRIX_INV_VIEW = InverseMatrix4(matrix_get(matrix_view));
+
+
 </string>
           </argument>
         </arguments>

@@ -28,7 +28,7 @@
             <string>///Cube map render pass
 scr_set_shader_shaded();
 
-d3d_draw_floor(-100,100,-16, 100,-100,-16, background_get_texture(tex_ground), 5, 5);
+d3d_draw_floor(100,100,64, -100,-100,64, background_get_texture(tex_ground), 5, 5);
 
 shader_reset();
 </string>
@@ -56,7 +56,7 @@ shader_reset();
             <string>///Main render pass
 scr_set_shader_shaded();
 
-d3d_draw_floor(-100,100,-16, 100,-100,-16, background_get_texture(tex_ground), 5, 5);
+d3d_draw_floor(100,100,64, -100,-100,64, background_get_texture(tex_ground), 5, 5);
 
 shader_reset();
 </string>
