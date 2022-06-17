@@ -1,4 +1,4 @@
-///scr_set_shader_shaded();
+///scr_set_shader_shaded(metallic, roughness);
 
 shader_set(sh_shaded);
 
@@ -32,6 +32,16 @@ if (daytime){
     shadow_color[2] = 0.5255;
 }
 
+var shadow_map_size;
+shadow_map_size[1] = sm_height;
+shadow_map_size[0] = sm_width;
+shader_set_uniform_f_array(shader_get_uniform(sh_shaded, "shadowMapSize"), shadow_map_size);
+
+var screen_size;
+screen_size[1] = window_get_height();
+screen_size[0] = window_get_width();
+shader_set_uniform_f_array(shader_get_uniform(sh_shaded, "screenSize"), screen_size);
+shader_set_uniform_matrix_array(shader_get_uniform(sh_shaded, "projection"), matrix_get(matrix_projection));
 shader_set_uniform_f_array(shader_get_uniform(sh_shaded, "lightDirection"), light_direction);
 shader_set_uniform_f(shader_get_uniform(sh_shaded, "lightIntensity"), light_intensity);
 shader_set_uniform_f_array(shader_get_uniform(sh_shaded, "highlightColour"), highlight_color);
@@ -44,5 +54,14 @@ if (surface_exists(shadow_map)){
 }
 texture_set_stage(shader_get_sampler_index(sh_shaded, "toonTexture"), background_get_texture(tex_toon_simple));
 
+texture_set_stage(shader_get_sampler_index(sh_shaded, "metallic"), argument0);
+texture_set_stage(shader_get_sampler_index(sh_shaded, "roughness"), argument1);
+if (surface_exists(albedo)){
+    texture_set_stage(shader_get_sampler_index(sh_shaded, "screen"), surface_get_texture(albedo));
+}else{
+    show_debug_message("Albedo map does not exist!");
+}
+
 shader_set_uniform_f(shader_get_uniform(sh_shaded, "uCameraNear"), 0.1);
 shader_set_uniform_f(shader_get_uniform(sh_shaded, "uCameraFar"), 400);
+

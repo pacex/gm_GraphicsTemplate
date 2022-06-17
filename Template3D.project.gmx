@@ -87,7 +87,17 @@
     <background>background\tex_color</background>
     <background>background\tex_toon_simple</background>
     <background>background\tex_toon_staged</background>
-    <background>background\tex_ground</background>
+    <backgrounds name="texture">
+      <backgrounds name="albedo">
+        <background>background\tex_ground</background>
+      </backgrounds>
+      <backgrounds name="roughness">
+        <background>background\rgh_ground</background>
+      </backgrounds>
+      <backgrounds name="metallic">
+        <background>background\mtl_ground</background>
+      </backgrounds>
+    </backgrounds>
   </backgrounds>
   <paths name="paths"/>
   <scripts name="scripts">

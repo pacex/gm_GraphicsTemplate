@@ -72,12 +72,12 @@ MATRIX_INV_VIEW = InverseMatrix4(matrix_get(matrix_view));
                             of the light source. Used in the sh_shaded shader.
 */
 globalvar shadow_map, sm_width, sm_height, lightViewProjMat;
-sm_width = window_get_width()*10;
-sm_height = window_get_height()*10;
+sm_width = window_get_width() * 4;
+sm_height = window_get_height() * 4;
 
 shadow_map = surface_create(sm_width, sm_height);
 
-/*Cube map global variables
+/* Cube map global variables
     cube_map:               array of 6 square surfaces forming the cube map
     sm_size:                size of these surfaces
     render_cubemap:         flag to determine if the cube map is (re)rendered for the current frame.
@@ -89,6 +89,15 @@ render_cubemap = true;
 for(var i = 5; i &gt;= 0; i--){
     cube_map[i] = surface_create(cm_size, cm_size);
 }
+/* Albedo map global variables
+    albedo:                 reference to the albedo map surface
+    alb_width, alb_height   width and height of the albedo map surface
+*/
+globalvar albedo, alb_width, alb_height;
+alb_width = window_get_width();
+alb_height = window_get_height();
+albedo = surface_create(alb_width, alb_height);
+
 
 /*Lighting global varliables
     light_direction:        3-element array defining the orientation of the directional light source.
@@ -171,6 +180,60 @@ if (mouse_check_button(mb_right)){
 light_direction[0] = lengthdir_x(1, current_time * 0.04);
 light_direction[1] = lengthdir_y(1, current_time * 0.04);
 light_direction[2] = -1;
+</string>
+          </argument>
+        </arguments>
+      </action>
+    </event>
+    <event eventtype="7" enumb="12">
+      <action>
+        <libid>1</libid>
+        <id>603</id>
+        <kind>7</kind>
+        <userelative>0</userelative>
+        <isquestion>0</isquestion>
+        <useapplyto>-1</useapplyto>
+        <exetype>2</exetype>
+        <functionname></functionname>
+        <codestring></codestring>
+        <whoName>self</whoName>
+        <relative>0</relative>
+        <isnot>0</isnot>
+        <arguments>
+          <argument>
+            <kind>1</kind>
+            <string>///Prepare albedo map render pass
+
+if (surface_exists(albedo)){
+    surface_reset_target();
+    surface_set_target(albedo);
+
+    /* Clear shadow map
+        alpha channel must be set to zero to clear depth buffer!
+    */
+    draw_clear_alpha(c_black, 0);
+    
+    /* Set view and projection matrices
+    */
+    d3d_set_projection_ext(distance,0,0, 0,0,0, 0,0,1, 60, window_get_width() / window_get_height(), 1, 512);
+    
+    var mat_hor_rotation = matrix_build(0,0,0, 0,0,hor_rotation, 1,1,1);
+    var mat_ver_rotation = matrix_build(0,0,0, 0,ver_rotation,0, 1,1,1);
+    
+    var mat_transform = matrix_multiply(mat_hor_rotation, mat_ver_rotation);
+    
+    matrix_set(matrix_view, matrix_multiply(mat_transform, matrix_get(matrix_view)));
+    
+    //Calculate inverse view matrix for use in shaders
+    MATRIX_INV_VIEW = InverseMatrix4(matrix_get(matrix_view));
+    
+}else{
+    //Create albedo map, if lost from memory.
+    albedo = surface_create(alb_width, alb_height);
+    show_debug_message("Created albedo map!");
+}
+
+
 </string>
           </argument>
         </arguments>
@@ -315,6 +378,14 @@ with(all){
     event_perform(ev_other,ev_user0);
 }
 
+with(all){
+    /* Albedo map render pass
+        objects that to not draw anything during UserEvent2
+        will not be reflected in screen space reflections.
+    */
+    event_perform(ev_other,ev_user2);
+}
+
 
 </string>
           </argument>
@@ -428,6 +499,31 @@ if (render_cubemap){
 }
 
 
+</string>
+          </argument>
+        </arguments>
+      </action>
+    </event>
+    <event eventtype="8" enumb="64">
+      <action>
+        <libid>1</libid>
+        <id>603</id>
+        <kind>7</kind>
+        <userelative>0</userelative>
+        <isquestion>0</isquestion>
+        <useapplyto>-1</useapplyto>
+        <exetype>2</exetype>
+        <functionname></functionname>
+        <codestring></codestring>
+        <whoName>self</whoName>
+        <relative>0</relative>
+        <isnot>0</isnot>
+        <arguments>
+          <argument>
+            <kind>1</kind>
+            <string>if (surface_exists(albedo)){
+    //draw_surface(albedo,0,0)
+}
 </string>
           </argument>
         </arguments>

@@ -119,6 +119,41 @@ rotation = rotation mod 360;
         </arguments>
       </action>
     </event>
+    <event eventtype="7" enumb="12">
+      <action>
+        <libid>1</libid>
+        <id>603</id>
+        <kind>7</kind>
+        <userelative>0</userelative>
+        <isquestion>0</isquestion>
+        <useapplyto>-1</useapplyto>
+        <exetype>2</exetype>
+        <functionname></functionname>
+        <codestring></codestring>
+        <whoName>self</whoName>
+        <relative>0</relative>
+        <isnot>0</isnot>
+        <arguments>
+          <argument>
+            <kind>1</kind>
+            <string>///Albedo Render Pass
+scr_set_shader_toon_character();
+
+d3d_transform_set_rotation_z(rotation);
+
+d3d_model_draw(body, x,y,z, tex_body);
+d3d_model_draw(eyes, x,y,z, tex_eyes);
+d3d_model_draw(chain, x,y,z, tex_body);
+d3d_model_draw(spear, x,y,z, tex_body);
+
+d3d_transform_set_identity();
+
+shader_reset();
+</string>
+          </argument>
+        </arguments>
+      </action>
+    </event>
     <event eventtype="7" enumb="11">
       <action>
         <libid>1</libid>
